@@ -1,0 +1,50 @@
+services:
+  server:
+    container_name: nginx_nebus_api_backend
+    image: nginx:alpine
+    working_dir: /application
+    ports:
+      - "127.0.0.1:80:80"
+    volumes:
+      - ./:/var/www/nebus_api_backend
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - nebus_api_backend
+
+  app:
+    container_name: app_nebus_api_backend
+    build:
+      context: ./deploy/dockerfiles
+      dockerfile: local-alpine.Dockerfile
+      args:
+        WWWUSER: '${WWWUSER:-1000}'
+        WWWGROUP: '${WWWGROUP:-1000}'
+    working_dir: /var/www/nebus_api_backend
+    volumes:
+      - ./:/var/www/nebus_api_backend
+      - ./deploy/php/uploads.ini:/usr/local/etc/php/php.ini
+    networks:
+      - nebus_api_backend
+
+  pgsql:
+    container_name: pgsql_nebus_api_backend
+    image: postgres:16.0-alpine
+    environment:
+      PGPASSWORD: '${DB_PASSWORD:-secret}'
+      POSTGRES_DB: '${DB_DATABASE}'
+      POSTGRES_USER: '${DB_USERNAME}'
+      POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+    volumes:
+      - nebus-api-backend-pgsql-data:/var/lib/postgresql/data
+    ports:
+      - '127.0.0.1:5338:5432'
+    networks:
+      - nebus_api_backend
+
+volumes:
+  nebus-api-backend-pgsql-data:
+    driver: local
+
+networks:
+  nebus_api_backend:
+    driver: bridge
