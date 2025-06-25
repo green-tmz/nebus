@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SearchByNameRequest;
 use App\Http\Resources\OrganizationResource;
+use App\Http\Resources\OrganizationsResource;
 use App\Models\Activity;
 use App\Models\Building;
 use App\Models\Organization;
@@ -12,32 +14,36 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class OrganizationController extends Controller
 {
-    public function index()
+    public function index(): OrganizationsResource
     {
         $organizations = Organization::with(['building', 'phones', 'activities'])->paginate();
-        return OrganizationResource::collection($organizations);
+        return new OrganizationsResource($organizations);
     }
 
-    public function show(Organization $organization): Organization
+    public function show(Organization $organization): OrganizationResource
     {
-        return $organization->load(['building', 'phones', 'activities']);
+        return new OrganizationResource(
+            $organization->load(['building', 'phones', 'activities'])
+        );
     }
 
-    public function searchByName(Request $request)
+    public function searchByName(SearchByNameRequest $request): OrganizationsResource
     {
-        $name = $request->query('name');
+        $validData = $request->validated();
 
-        return Organization::where('name', 'like', "%{$name}%")
+        $organization = Organization::where('name', 'like', "%{$validData['name']}%")
             ->with(['building', 'phones', 'activities'])
             ->paginate();
+
+        return new OrganizationsResource($organization);
     }
 
-    public function byBuilding(Building $building): LengthAwarePaginator
+    public function searchByBuilding(Building $building): LengthAwarePaginator
     {
         return $building->organizations()->with(['phones', 'activities'])->paginate();
     }
 
-    public function byActivity(Activity $activity)
+    public function searchByActivity(Activity $activity)
     {
         $activityIds = $activity->getDescendantsAndSelf()->pluck('id');
 
@@ -46,7 +52,7 @@ class OrganizationController extends Controller
         })->with(['building', 'phones', 'activities'])->paginate();
     }
 
-    public function byGeoLocation(Request $request)
+    public function searchByGeoLocation(Request $request)
     {
         $latitude = $request->query('lat');
         $longitude = $request->query('lng');

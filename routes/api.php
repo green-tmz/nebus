@@ -9,11 +9,12 @@ Route::middleware('api.key')->group(function () {
     // Organizations
     Route::get('/organizations', [OrganizationController::class, 'index']);
     Route::get('/organizations/{organization}', [OrganizationController::class, 'show']);
-    Route::get('/organizations/search/name', [OrganizationController::class, 'searchByName']);
-    Route::get('/organizations/building/{building}', [OrganizationController::class, 'byBuilding']);
-    Route::get('/organizations/activity/{activity}', [OrganizationController::class, 'byActivity']);
-    Route::get('/organizations/nearby', [OrganizationController::class, 'byGeoLocation']);
-
+    Route::prefix('/organizations/search')->group(function () {
+        Route::post('name', [OrganizationController::class, 'searchByName']);
+        Route::get('building/{building}', [OrganizationController::class, 'searchByBuilding']);
+        Route::get('activity/{activity}', [OrganizationController::class, 'searchByActivity']);
+        Route::get('nearby', [OrganizationController::class, 'searchByGeoLocation']);
+    });
     // Buildings
     Route::get('/buildings', [BuildingController::class, 'index']);
 

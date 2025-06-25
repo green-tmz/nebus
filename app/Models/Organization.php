@@ -14,6 +14,12 @@ class Organization extends Model
         'building_id'
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'building_id'
+    ];
+
     public function building(): BelongsTo
     {
         return $this->belongsTo(Building::class);
