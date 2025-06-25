@@ -38,21 +38,25 @@ class OrganizationController extends Controller
         return new OrganizationsResource($organization);
     }
 
-    public function searchByBuilding(Building $building): LengthAwarePaginator
+    public function searchByBuilding(Building $building): OrganizationsResource
     {
-        return $building->organizations()->with(['phones', 'activities'])->paginate();
+        return new OrganizationsResource(
+            $building->organizations()->with(['phones', 'activities'])->paginate()
+        );
     }
 
-    public function searchByActivity(Activity $activity)
+    public function searchByActivity(Activity $activity): OrganizationsResource
     {
         $activityIds = $activity->getDescendantsAndSelf()->pluck('id');
 
-        return Organization::whereHas('activities', function($query) use ($activityIds) {
+        $organization = Organization::whereHas('activities', function($query) use ($activityIds) {
             $query->whereIn('business_activity_id', $activityIds);
         })->with(['building', 'phones', 'activities'])->paginate();
+
+        return new OrganizationsResource($organization);
     }
 
-    public function searchByGeoLocation(Request $request)
+    public function searchByGeoLocation(Request $request): OrganizationsResource
     {
         $latitude = $request->query('lat');
         $longitude = $request->query('lng');
@@ -65,8 +69,10 @@ class OrganizationController extends Controller
             ->orderBy('distance')
             ->pluck('id');
 
-        return Organization::whereIn('building_id', $buildings)
+        $organization = Organization::whereIn('building_id', $buildings)
             ->with(['building', 'phones', 'activities'])
             ->paginate();
+
+        return new OrganizationsResource($organization);
     }
 }
