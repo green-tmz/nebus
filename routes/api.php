@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\ActivityController;
-use App\Http\Controllers\Api\BuildingController;
 use App\Http\Controllers\Api\OrganizationController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,8 +12,4 @@ Route::middleware('api.key')->group(function () {
         Route::get('activity/{activity}', [OrganizationController::class, 'searchByActivity']);
         Route::post('nearby', [OrganizationController::class, 'searchByGeoLocation']);
     });
-
-    Route::get('/buildings', [BuildingController::class, 'index']);
-
-    Route::get('/activities', [ActivityController::class, 'index']);
 });
