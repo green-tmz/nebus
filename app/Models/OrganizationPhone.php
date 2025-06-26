@@ -12,6 +12,12 @@ class OrganizationPhone extends Model
         'phone'
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'organization_id'
+    ];
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
