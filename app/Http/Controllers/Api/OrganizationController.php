@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\SearchByGeoLocationRequest;
 use App\Http\Requests\SearchByNameRequest;
 use App\Http\Resources\OrganizationResource;
 use App\Http\Resources\OrganizationsResource;
@@ -50,22 +51,30 @@ class OrganizationController extends Controller
         $activityIds = $activity->getDescendantsAndSelf()->pluck('id');
 
         $organization = Organization::whereHas('activities', function($query) use ($activityIds) {
-            $query->whereIn('business_activity_id', $activityIds);
+            $query->whereIn('activity_id', $activityIds);
         })->with(['building', 'phones', 'activities'])->paginate();
 
         return new OrganizationsResource($organization);
     }
 
-    public function searchByGeoLocation(Request $request): OrganizationsResource
+    public function searchByGeoLocation(SearchByGeoLocationRequest $request): OrganizationsResource
     {
-        $latitude = $request->query('lat');
-        $longitude = $request->query('lng');
-        $radius = $request->query('radius', 10);
+        $validData = $request->validated();
 
-        $buildings = Building::selectRaw('*,
-            (6371 * acos(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)))
-            AS distance', [$latitude, $longitude, $latitude])
-            ->having('distance', '<', $radius)
+        $buildings = Building::query()
+            ->fromSub(function ($query) use ($validData) {
+                $query->from('buildings')->selectRaw("*,
+                    6371 * acos(
+                        cos(radians(?)) *
+                        cos(radians(latitude)) *
+                        cos(radians(longitude) - radians(?)) +
+                        sin(radians(?)) *
+                        sin(radians(latitude))
+                    ) as distance",
+                            [$validData['lat'], $validData['lng'], $validData['lat']]
+                    );
+            }, 'buildings_with_distance')
+            ->where('distance', '<', $validData['radius'])
             ->orderBy('distance')
             ->pluck('id');
 
