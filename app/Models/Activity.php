@@ -16,6 +16,12 @@ class Activity extends Model
         'level'
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at',
+        'pivot'
+    ];
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Activity::class, 'parent_id');

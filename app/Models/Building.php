@@ -13,6 +13,11 @@ class Building extends Model
         'longitude'
     ];
 
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
+
     public function organizations(): HasMany
     {
         return $this->hasMany(Organization::class);
